@@ -20,6 +20,7 @@ class RealAPICallTest(unittest.TestCase):
 
         # Verify that the result is a float (indicative of a successful conversion)
         # Note: This is a simplistic check and assumes the API returns a JSON with a 'result' key
+        print(data.get("result"))
         self.assertIsInstance(data.get("result"), float)
 
 
