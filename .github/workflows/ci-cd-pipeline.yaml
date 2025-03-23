@@ -8,7 +8,7 @@ on:
       - 'v*.*.*'
 
 env:
-  DOCKER_IMAGE: afakharany/currencyconverter
+  DOCKER_IMAGE: 5starrrfahd/currencyconverter
 
 jobs:
   test:
@@ -53,7 +53,7 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          DOCKER_IMAGE=5starrrfahd/currencyconverter
+          DOCKER_IMAGE=${{ env.DOCKER_IMAGE }}
           DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD=${{ secrets.DOCKER_PASSWORD }}
 
@@ -69,3 +69,34 @@ jobs:
             docker tag $DOCKER_IMAGE $DOCKER_IMAGE:$TAG
             docker push $DOCKER_IMAGE:$TAG
           done
+
+  update-deployment:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code 
+        uses: actions/checkout@v4 
+      - name: Configure git
+        run: |
+          git config user.name "Github Actions"
+          git config user.email "actions@github.com"
+      - name: Update Deployment Image 
+        run: |
+          git pull --rebase origin main
+          IMAGE_TAG=${{ needs.build-and-push.outputs.sha }}
+          sed -i 's|image: ' ${{env.DOCKER_IMAGE }}':.*|image: '${{ env.DOCKER_IMAGE }}':'"$IMAGE_TAG"'|' k8s/base/deployment.yaml
+          git add k8s/base/deployment.yaml 
+          git commit -m "Updates the image version to $IMAGE_TAG"
+          git push
+      - name: Install Argo CD CLI
+        run: |
+          curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+      - name: Login to argocd 
+        run: |
+          argocd login ${{ secrets.ARGOCD_SERVER }} --username admin --password ${{ secrets.ARGOCD_AUTH_TOKEN }}
+      - name: Sync argo cd Application
+        run: |
+          argocd app sync $ARGOCD_APP_NAME
+        env:
+          ARGOCD_APP_NAME: currencyconverter-production
