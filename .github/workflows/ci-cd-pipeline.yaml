@@ -83,7 +83,7 @@ jobs:
       - name: Update Deployment Image 
         run: |
           IMAGE_TAG=${{ needs.build-and-push.outputs.sha }}
-          sed -i "s|image: 5starrrfahd/currencyconverter:.*|image: 5starrrfahd/currencyconverter:$IMAGE_TAG|" k8s/base/deployment.yaml
+          sed -i 's|image: '${{ env.DOCKER_IMAGE }}':.*|image: '${{ env.DOCKER_IMAGE }}':'"$IMAGE_TAG"'|' k8s/base/deployment.yaml
           git add k8s/base/deployment.yaml 
           git commit -m "Updates the image version to $IMAGE_TAG"
           git push
