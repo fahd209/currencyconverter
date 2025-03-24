@@ -97,6 +97,4 @@ jobs:
           argocd login ${{ secrets.ARGOCD_SERVER }} --username admin --password ${{ secrets.ARGOCD_AUTH_TOKEN }}
       - name: Sync argo cd Application
         run: |
-          argocd app sync $ARGOCD_APP_NAME
-        env:
-          ARGOCD_APP_NAME: currencyconverter-production
+          argocd app sync currencyconverter-production
