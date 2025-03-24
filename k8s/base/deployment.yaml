@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: currency-converter
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: currency-converter
@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: currency-converter
-        image: afakharany/currencyconverter:b246199
+        image: 5starrrfahd/currencyconverter
         ports:
         - containerPort: 5555
         env:
