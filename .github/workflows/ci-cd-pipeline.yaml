@@ -80,9 +80,28 @@ jobs:
         run: |
           git config user.name "Github Actions"
           git config user.email "actions@github.com"
-      - name: Update Deployment Image 
+      - name: Check if repo is in sync
+        id: check-sync
+        run: |
+          git fetch origin main
+          LOCAL=$(git rev-parse @)
+          REMOTE=$(git rev-parse origin/main)
+          
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "Repository is not in sync. Updating..."
+            echo "RUN_PULL=true" >> $GITHUB_ENV
+          else
+            echo "Repository is already in sync."
+            echo "RUN_PULL=false" >> $GITHUB_ENV
+          fi
+
+      - name: Pull latest changes if out of sync
+        if: env.RUN_PULL == 'true'
         run: |
           git pull --rebase origin main
+          
+      - name: Update Deployment Image 
+        run: |
           IMAGE_TAG=${{ needs.build-and-push.outputs.sha }}
           sed -i 's|image: '${{ env.DOCKER_IMAGE }}':.*|image: '${{ env.DOCKER_IMAGE }}':'"$IMAGE_TAG"'|' k8s/base/deployment.yaml
           git add k8s/base/deployment.yaml 
